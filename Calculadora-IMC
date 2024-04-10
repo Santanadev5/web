@@ -1,0 +1,106 @@
+<?php
+
+require_once __DIR__ . '/src/Usuario.php';
+require_once __DIR__ . '/src/CalculadoraImc.php';
+require_once __DIR__ . '/src/SexoEnum.php';
+require_once __DIR__ . '/src/ClassificacaoImcEnum.php';
+require_once __DIR__ . '/src/ClassificaMenorDeIdade.php';
+
+
+$usuario = new Usuario( nome: $_POST['nome'], 
+                        peso: $_POST['peso'], 
+                        altura: $_POST['altura'],
+                        sexo: SexoEnum::from($_POST['sexo']),
+                        dataNascimento: new DateTimeImmutable($_POST['data_nascimento']));
+
+
+$calculadora = new CalculadoraImc($usuario);
+
+if ($usuario->getIdadeAtual() >= 19){
+    $resultado = ClassificaMenorDeIdade::classifica($calculadora->calcular());
+}
+else{
+    $resultado = ClassificacaoImcEnum::classifica($calculadora->calcular());
+}
+
+
+// 1) ler o template de resposta
+$template = file_get_contents(__DIR__ . '/src/templates/resultado.html');
+
+// 2) trocar cada valor estatico pelo valor do script
+$template = str_replace(
+    [
+        '{{USUARIO}}',
+        '{{PESO}}',
+        '{{ALTURA}}',
+        '{{IDADE}}',
+        '{{SEXO}}',
+        '{{ICM}}',
+        '{{CLASSIFICACAO}}'
+    ],
+    [
+        $usuario->getNome(),
+        $usuario->getPeso(),
+        $usuario->getAltura(),
+        $usuario->getIdadeAtual(),
+        $usuario->getSexo()->value,
+        $calculadora->calcular(),
+        $resultado
+    ],
+    $template);
+
+
+echo $template;
+
+------------------------------------------------------------------------------------------------
+<?php
+
+require_once __DIR__ . '/src/Usuario.php';
+require_once __DIR__ . '/src/CalculadoraImc.php';
+require_once __DIR__ . '/src/SexoEnum.php';
+require_once __DIR__ . '/src/ClassificacaoImcEnum.php';
+
+$usuario = new Usuario('Joao', new DateTimeImmutable('2000-01-01'), 150, 1.80, SexoEnum::M);
+$calculadoraImc = new CalculadoraImc($usuario);
+print_r(ClassificacaoImcEnum::classifica($calculadoraImc->calcular()));
+------------------------------------------------------------------------------------------------
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora IMC</title>
+</head>
+<body>
+    <form action="/app.php" method="POST">
+        <div>
+            <label for="nome">Nome:</label>
+            <input type="text" name="nome" id="nome">
+        </div>
+        <div>
+            <label for="data_nascimento">Data Nascimento:</label>
+            <input type="date" name="data_nascimento" id="data_nascimento">            
+        </div> 
+        <div>
+            <label for="peso">Peso (KG):</label>
+            <input type="number" name="peso" id="peso" step="0.01">            
+        </div> 
+        <div>
+            <label for="altura">Altura (M):</label>
+            <input type="number" name="altura" id="altura" step="0.01">            
+        </div>  
+        <div>
+            <label for="">Selecione o sexo:</label>
+            <select name="sexo" id="sexo">
+                <option disabled>Selecione</option>
+                <option value="Masculino">Masculino</option>
+                <option value="Femino">Femino</option>
+            </select>
+        </div>  
+        <div>
+            <input type="submit" value="Calcular">
+        </div>            
+    </form>
+</body>
+</html>
+---------------------------------------------------------------------------------------------------------
