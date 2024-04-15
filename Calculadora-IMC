@@ -1,106 +1,205 @@
-<?php
-
-require_once __DIR__ . '/src/Usuario.php';
-require_once __DIR__ . '/src/CalculadoraImc.php';
-require_once __DIR__ . '/src/SexoEnum.php';
-require_once __DIR__ . '/src/ClassificacaoImcEnum.php';
-require_once __DIR__ . '/src/ClassificaMenorDeIdade.php';
-
-
-$usuario = new Usuario( nome: $_POST['nome'], 
-                        peso: $_POST['peso'], 
-                        altura: $_POST['altura'],
-                        sexo: SexoEnum::from($_POST['sexo']),
-                        dataNascimento: new DateTimeImmutable($_POST['data_nascimento']));
-
-
-$calculadora = new CalculadoraImc($usuario);
-
-if ($usuario->getIdadeAtual() >= 19){
-    $resultado = ClassificaMenorDeIdade::classifica($calculadora->calcular());
-}
-else{
-    $resultado = ClassificacaoImcEnum::classifica($calculadora->calcular());
-}
-
-
-// 1) ler o template de resposta
-$template = file_get_contents(__DIR__ . '/src/templates/resultado.html');
-
-// 2) trocar cada valor estatico pelo valor do script
-$template = str_replace(
-    [
-        '{{USUARIO}}',
-        '{{PESO}}',
-        '{{ALTURA}}',
-        '{{IDADE}}',
-        '{{SEXO}}',
-        '{{ICM}}',
-        '{{CLASSIFICACAO}}'
-    ],
-    [
-        $usuario->getNome(),
-        $usuario->getPeso(),
-        $usuario->getAltura(),
-        $usuario->getIdadeAtual(),
-        $usuario->getSexo()->value,
-        $calculadora->calcular(),
-        $resultado
-    ],
-    $template);
-
-
-echo $template;
-
-------------------------------------------------------------------------------------------------
-<?php
-
-require_once __DIR__ . '/src/Usuario.php';
-require_once __DIR__ . '/src/CalculadoraImc.php';
-require_once __DIR__ . '/src/SexoEnum.php';
-require_once __DIR__ . '/src/ClassificacaoImcEnum.php';
-
-$usuario = new Usuario('Joao', new DateTimeImmutable('2000-01-01'), 150, 1.80, SexoEnum::M);
-$calculadoraImc = new CalculadoraImc($usuario);
-print_r(ClassificacaoImcEnum::classifica($calculadoraImc->calcular()));
-------------------------------------------------------------------------------------------------
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora IMC</title>
+    <title>Calculaora IMC</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
-    <form action="/app.php" method="POST">
-        <div>
-            <label for="nome">Nome:</label>
-            <input type="text" name="nome" id="nome">
-        </div>
-        <div>
-            <label for="data_nascimento">Data Nascimento:</label>
-            <input type="date" name="data_nascimento" id="data_nascimento">            
-        </div> 
-        <div>
-            <label for="peso">Peso (KG):</label>
-            <input type="number" name="peso" id="peso" step="0.01">            
-        </div> 
-        <div>
-            <label for="altura">Altura (M):</label>
-            <input type="number" name="altura" id="altura" step="0.01">            
-        </div>  
-        <div>
-            <label for="">Selecione o sexo:</label>
-            <select name="sexo" id="sexo">
-                <option disabled>Selecione</option>
-                <option value="Masculino">Masculino</option>
-                <option value="Femino">Femino</option>
-            </select>
-        </div>  
-        <div>
-            <input type="submit" value="Calcular">
-        </div>            
-    </form>
+    <main id="container">
+        <section id="calculator">
+            <form id="form">
+                <h1 id="title">
+                    Calculadora - IMC
+                </h1>
+
+                <div class="input-box">
+                    <label for="weight">
+                        Peso em Kg
+                    </label>
+                    <div class="input-field">
+                        <i class="fa-solid fa-weight-scale"></i>
+                        <input type="number" id="weight" required>
+                        <span>
+                            Kg
+                        </span>
+                    </div>
+                </div>
+
+                <div class="input-box">
+                    <label for="heigth">
+                        Altura em metros
+                    </label>
+                    <div class="input-field">
+                        <i class="fa-solid fa-ruler-vertical"></i>
+                        <input type="number" id="heigth" required>
+                        <span>
+                            M
+                        </span>
+                    </div>
+                </div>
+
+                <button id="calculate">
+                    Calcular
+                </button>
+
+            </form>
+
+                <div id="infos" class="hidden">
+                    <div id="results">
+                        <div id="bmi">
+                            <span id="value">69</span>
+                            <span>Seu IMC</span>
+                        </div>
+                        <div id="description">
+                            <span>69</span>
+                        </div>
+                    </div>
+                </div>
+
+        </section>
+
+    </main>
 </body>
 </html>
----------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------------
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100vh;
+    background-color: #0FC2C0;
+}
+
+#calculator {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 2rem;
+    color: white;
+    background-color: #023535;
+    font-size: large;
+    border-radius: 8px;
+}
+
+#form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+#title {
+    font-size: 2rem;
+    position: relative;
+}
+
+#title::after {
+    position: absolute;
+    content: '';
+    background-color: #0FC2C0;
+    width: 6rem;
+    height: 3px;
+    bottom: 0;
+    left: 0;
+    border-radius: 3px;
+}
+
+.input-box label {
+    font-size: 1rem;
+    font-weight: 500;
+    font-weight: bold;
+}
+
+.input-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #0FC2C0;
+    padding: 0.3rem;
+    border-radius: 3px;
+    margin-top: 3px;
+}
+
+.input-field span,
+.input-field i {
+    color: white;
+    font-size: 1.3rem;
+    padding: 0.6rem 1rem;
+}
+
+.input-field input {
+    background-color: transparent;
+    border: none;
+    width: 100%;
+    font-size: 1.3rem;
+    color: white;
+    padding: 0 0.5rem;
+}
+
+.input-field input::-webkit-outer-spin-button,
+.input-field input::-webkit-inner-spin-button {
+    appearance: none;
+}
+
+.input-field input:focus {
+    outline: none;
+}
+
+#calculate {
+    border: none;
+    font-size: 1.25rem;
+    font-weight: bold;
+    background-color:#0FC2C0;
+    color: white;
+    padding: 0.5rem 0;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+#result{
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    border-top: 1px solid white;
+    padding: 0.75rem, 0;
+}
+
+#bmi {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    font-size: 2rem;
+
+}
+
+#bmi span:last-child {
+    font-size: 0.8rem;
+}
+
+#desciption{
+    width: 15.5rem;
+}
+
+#more-info {
+    text-align: center;
+    border-top: 1px;
+    padding-top: 1.5rem;
+    
+}
+
+.hidden {
+    display: none;
+}
+
+---------------------------------------------------------------------------------------------------------------------
